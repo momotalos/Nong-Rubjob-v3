@@ -1111,7 +1111,7 @@ function stopBreathing() {
 }
 
 // ============ INIT ============
-function init() {
+async function init() {
   // Language
   setLang(currentLang);
 
@@ -1138,24 +1138,23 @@ function init() {
   renderBarChart();
   renderHeatmap();
 
-  // Restore session from localStorage if user was previously logged in
-  const savedUser = localStorage.getItem('mindhub_user');
-  if (savedUser) {
-    try {
-      currentUser = JSON.parse(savedUser);
-      await setupLoggedInUser();
-      return;
-    } catch(e) {
-      localStorage.removeItem('mindhub_user');
-    }
-  }
-
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
       const m = document.getElementById('consent-modal');
       if (m && m.classList.contains('show')) closeConsent();
     }
   });
+
+  // Restore session from localStorage if user was previously logged in
+  const savedUser = localStorage.getItem('mindhub_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      await setupLoggedInUser();
+    } catch(e) {
+      localStorage.removeItem('mindhub_user');
+    }
+  }
 }
 
 window.addEventListener('load', init);
