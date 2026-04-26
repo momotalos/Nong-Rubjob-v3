@@ -1,7 +1,7 @@
 // ============ GEMINI API CONFIG ============
 // API key is stored securely in Netlify env vars — never exposed in frontend code.
 // Browser calls /api/chat (Netlify function) which forwards to Gemini with the key.
-const GEMINI_MODEL = 'gemini-2.0-flash-lite';
+const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
 
 // ============ i18n TRANSLATIONS ============
 const I18N = {
@@ -371,6 +371,7 @@ async function doLogin() {
   }
 
   currentUser = { uid: account.uid, email, role: account.role, name: account.name, id: account.id, consented: true };
+  localStorage.setItem('mindhub_user', JSON.stringify(currentUser));
   await setupLoggedInUser();
 }
 
@@ -422,6 +423,7 @@ function logout() {
   sanctuaryCache = null;
   sessions = [];
   activeSessionId = null;
+  localStorage.removeItem('mindhub_user');
   document.getElementById('top-nav').style.display = 'none';
   document.getElementById('top-user').style.display = 'none';
   document.getElementById('login-email').value = '';
@@ -1136,7 +1138,17 @@ function init() {
   renderBarChart();
   renderHeatmap();
 
-  // No Firebase Auth — using hardcoded demo accounts
+  // Restore session from localStorage if user was previously logged in
+  const savedUser = localStorage.getItem('mindhub_user');
+  if (savedUser) {
+    try {
+      currentUser = JSON.parse(savedUser);
+      await setupLoggedInUser();
+      return;
+    } catch(e) {
+      localStorage.removeItem('mindhub_user');
+    }
+  }
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
