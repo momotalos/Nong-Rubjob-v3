@@ -10,7 +10,7 @@ export default async (req) => {
 
   try {
     const body = await req.json();
-    const model = body.model || 'gemini-2.0-flash-lite';
+    const model = body.model || 'gemini-3.1-flash-lite-preview';
 
     // Forward the request to Gemini — NO retries here (client handles retries)
     const geminiRes = await fetch(
