@@ -2,6 +2,7 @@
 // API key is stored securely in Netlify env vars — never exposed in frontend code.
 // Browser calls /api/chat (Netlify function) which forwards to Gemini with the key.
 const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
+const GEMINI_FALLBACK_MODEL = 'gemini-2.0-flash-lite';
 
 // ============ i18n TRANSLATIONS ============
 const I18N = {
@@ -685,35 +686,47 @@ async function sendMessage() {
       parts: [{ text: m.content }]
     }));
 
-    // Retry up to 3 times on 503 (high demand) or 429 (quota) errors
-    const fetchWithRetry = async (retries = 3, delayMs = 2000) => {
-      for (let attempt = 1; attempt <= retries; attempt++) {
-        const res = await fetch('/api/chat', {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            model: GEMINI_MODEL,
-            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-            contents: geminiContents,
-            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
-          })
-        });
-        if (res.status === 503 || res.status === 429) {
-          if (attempt < retries) {
-            typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
-            await new Promise(r => setTimeout(r, delayMs * attempt));
-            continue;
-          }
-        }
-        if (!res.ok) {
-          const errBody = await res.json().catch(() => ({}));
-          throw new Error(`API ${res.status}: ${errBody.error?.message || res.statusText}`);
-        }
-        return res;
-      }
-      throw new Error('API 503: Model is overloaded. Please try again in a moment.');
+    // Try primary model, then fallback model on 503/429
+    const tryModel = async (modelName) => {
+      const res = await fetch('/api/chat', {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          model: modelName,
+          systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+          contents: geminiContents,
+          generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+        })
+      });
+      return res;
     };
-    const response = await fetchWithRetry();
+
+    const fetchWithFallback = async () => {
+      // Attempt 1: primary model
+      let res = await tryModel(GEMINI_MODEL);
+      if (res.ok) return res;
+
+      // If 503/429, wait briefly then retry primary once
+      if (res.status === 503 || res.status === 429) {
+        typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
+        await new Promise(r => setTimeout(r, 1500));
+        res = await tryModel(GEMINI_MODEL);
+        if (res.ok) return res;
+      }
+
+      // If still failing, try fallback model
+      if (res.status === 503 || res.status === 429) {
+        console.log('Primary model overloaded, trying fallback:', GEMINI_FALLBACK_MODEL);
+        typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
+        res = await tryModel(GEMINI_FALLBACK_MODEL);
+        if (res.ok) return res;
+      }
+
+      // All attempts failed
+      const errBody = await res.json().catch(() => ({}));
+      throw new Error(`API ${res.status}: ${errBody.error?.message || errBody.error || res.statusText}`);
+    };
+    const response = await fetchWithFallback();
     const data = await response.json();
     const fullText = (data.candidates?.[0]?.content?.parts || []).map(p => p.text).join('\n');
     const visibleText = fullText.replace(/<SIGNAL>[\s\S]*?<\/SIGNAL>/, '').trim();
@@ -753,7 +766,11 @@ async function sendMessage() {
     renderSessionList();
   } catch (err) {
     typingEl.className = 'msg error';
-    typingEl.textContent = 'Error: ' + err.message + '\n\n(Make sure your Gemini API key is set correctly in js/app.js.)';
+    const isOverload = err.message.includes('503') || err.message.includes('429') || err.message.includes('overloaded');
+    const hint = isOverload
+      ? '\n\n(The model is temporarily overloaded. Please wait a moment and try again.)'
+      : '\n\n(Make sure your Gemini API key is set correctly in Netlify environment variables.)';
+    typingEl.textContent = 'Error: ' + err.message + hint;
     session.messages.push({ role: 'assistant', content: `[ERROR] ${err.message}` });
     saveSessions();
   } finally {
