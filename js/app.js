@@ -685,20 +685,35 @@ async function sendMessage() {
       parts: [{ text: m.content }]
     }));
 
-    const response = await fetch('/api/chat', {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({
-        model: GEMINI_MODEL,
-        systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
-        contents: geminiContents,
-        generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
-      })
-    });
-    if (!response.ok) {
-      const errBody = await response.json().catch(() => ({}));
-      throw new Error(`API ${response.status}: ${errBody.error?.message || response.statusText}`);
-    }
+    // Retry up to 3 times on 503 (high demand) or 429 (quota) errors
+    const fetchWithRetry = async (retries = 3, delayMs = 2000) => {
+      for (let attempt = 1; attempt <= retries; attempt++) {
+        const res = await fetch('/api/chat', {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            model: GEMINI_MODEL,
+            systemInstruction: { parts: [{ text: SYSTEM_PROMPT }] },
+            contents: geminiContents,
+            generationConfig: { maxOutputTokens: 1000, temperature: 0.7 }
+          })
+        });
+        if (res.status === 503 || res.status === 429) {
+          if (attempt < retries) {
+            typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
+            await new Promise(r => setTimeout(r, delayMs * attempt));
+            continue;
+          }
+        }
+        if (!res.ok) {
+          const errBody = await res.json().catch(() => ({}));
+          throw new Error(`API ${res.status}: ${errBody.error?.message || res.statusText}`);
+        }
+        return res;
+      }
+      throw new Error('API 503: Model is overloaded. Please try again in a moment.');
+    };
+    const response = await fetchWithRetry();
     const data = await response.json();
     const fullText = (data.candidates?.[0]?.content?.parts || []).map(p => p.text).join('\n');
     const visibleText = fullText.replace(/<SIGNAL>[\s\S]*?<\/SIGNAL>/, '').trim();
