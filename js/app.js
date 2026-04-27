@@ -706,9 +706,10 @@ async function sendMessage() {
       parts: [{ text: m.content }]
     }));
 
-    // Models to try in order: primary → fallback → second fallback
-    const modelsToTry = [GEMINI_MODEL, GEMINI_MODEL, GEMINI_FALLBACK_MODEL, 'gemini-3-flash'];
-    const delays =       [0,            1500,          0,                     0];
+    // We only use the primary model (gemini-3.1-flash-lite-preview)
+    // but we will retry a couple of times if the server is overloaded.
+    const modelsToTry = [GEMINI_MODEL, GEMINI_MODEL, GEMINI_MODEL];
+    const delays =       [0,            2000,          3000];
 
     const tryModel = async (modelName) => {
       const res = await fetch('/api/chat', {
@@ -730,8 +731,8 @@ async function sendMessage() {
         // Show friendly "please wait" message when retrying
         if (i > 0) {
           const waitMsg = currentLang === 'th'
-            ? 'รอน้องรับจบสักครู่นะครับ กำลังหาทางตอบให้พี่อยู่... 💙'
-            : "Hang on — N'Rub Job is finding another way to respond... 💙";
+            ? 'รอน้องรับจบสักครู่นะครับ คนใช้เยอะมากเลยกำลังลองส่งใหม่อีกครั้ง... 💙'
+            : "Hang on — lots of people are chatting! N'Rub Job is retrying your message... 💙";
           typingEl.innerHTML = `<div class="typing-wait">${waitMsg}</div>`;
         }
         if (delays[i] > 0) {
