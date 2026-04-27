@@ -157,6 +157,18 @@ html[lang="th"] .chat-title { font-family: 'IBM Plex Sans Thai', sans-serif; fon
 .typing span { width: 8px; height: 8px; background: var(--blue); border-radius: 50%; animation: typing 1.4s ease-in-out infinite; }
 .typing span:nth-child(2) { animation-delay: 0.2s; }
 .typing span:nth-child(3) { animation-delay: 0.4s; }
+
+.typing-wait {
+  color: #64748b;
+  font-size: 0.95rem;
+  font-style: italic;
+  padding: 0.2rem 0;
+  animation: pulseWait 2s ease-in-out infinite;
+}
+@keyframes pulseWait {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 1; }
+}
 @keyframes typing { 0%,60%,100% { transform: translateY(0); opacity: 0.4; } 30% { transform: translateY(-6px); opacity: 1; } }
 .quick-chips { display: flex; gap: 0.5rem; flex-wrap: wrap; padding: 0.75rem 1.5rem; background: white; border-top: 1px solid var(--line); }
 .chip { padding: 0.4rem 0.9rem; background: var(--blue-pale); border: 1px solid var(--blue-soft); border-radius: 999px; font-family: inherit; font-size: 0.78rem; color: var(--blue-deep); cursor: pointer; transition: all 0.2s; font-weight: 500; }
