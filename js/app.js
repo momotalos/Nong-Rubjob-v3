@@ -681,12 +681,17 @@ async function sendMessage() {
   const typingEl = appendTyping();
 
   try {
-    const geminiContents = session.messages.map(m => ({
+    // Filter out [ERROR] messages — they must NOT be sent to the API as model responses
+    const cleanMessages = session.messages.filter(m => !m.content.startsWith('[ERROR]'));
+    const geminiContents = cleanMessages.map(m => ({
       role: m.role === 'assistant' ? 'model' : 'user',
       parts: [{ text: m.content }]
     }));
 
-    // Try primary model, then fallback model on 503/429
+    // Models to try in order: primary → fallback → second fallback
+    const modelsToTry = [GEMINI_MODEL, GEMINI_MODEL, GEMINI_FALLBACK_MODEL, 'gemini-3-flash'];
+    const delays =       [0,            1500,          0,                     0];
+
     const tryModel = async (modelName) => {
       const res = await fetch('/api/chat', {
         method: "POST",
@@ -702,29 +707,27 @@ async function sendMessage() {
     };
 
     const fetchWithFallback = async () => {
-      // Attempt 1: primary model
-      let res = await tryModel(GEMINI_MODEL);
-      if (res.ok) return res;
-
-      // If 503/429, wait briefly then retry primary once
-      if (res.status === 503 || res.status === 429) {
-        typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
-        await new Promise(r => setTimeout(r, 1500));
-        res = await tryModel(GEMINI_MODEL);
-        if (res.ok) return res;
+      let lastRes = null;
+      for (let i = 0; i < modelsToTry.length; i++) {
+        // Show friendly "please wait" message when retrying
+        if (i > 0) {
+          const waitMsg = currentLang === 'th'
+            ? 'รอน้องรับจบสักครู่นะครับ กำลังหาทางตอบให้พี่อยู่... 💙'
+            : "Hang on — N'Rub Job is finding another way to respond... 💙";
+          typingEl.innerHTML = `<div class="typing-wait">${waitMsg}</div>`;
+        }
+        if (delays[i] > 0) {
+          await new Promise(r => setTimeout(r, delays[i]));
+        }
+        console.log(`Attempt ${i + 1}: trying ${modelsToTry[i]}`);
+        lastRes = await tryModel(modelsToTry[i]);
+        if (lastRes.ok) return lastRes;
+        // Only continue to next model on 503/429, otherwise fail immediately
+        if (lastRes.status !== 503 && lastRes.status !== 429) break;
       }
-
-      // If still failing, try fallback model
-      if (res.status === 503 || res.status === 429) {
-        console.log('Primary model overloaded, trying fallback:', GEMINI_FALLBACK_MODEL);
-        typingEl.querySelector('.typing') && (typingEl.innerHTML = `<div class="typing"><span></span><span></span><span></span></div>`);
-        res = await tryModel(GEMINI_FALLBACK_MODEL);
-        if (res.ok) return res;
-      }
-
       // All attempts failed
-      const errBody = await res.json().catch(() => ({}));
-      throw new Error(`API ${res.status}: ${errBody.error?.message || errBody.error || res.statusText}`);
+      const errBody = await lastRes.json().catch(() => ({}));
+      throw new Error(`API ${lastRes.status}: ${errBody.error?.message || errBody.error || lastRes.statusText}`);
     };
     const response = await fetchWithFallback();
     const data = await response.json();
@@ -765,13 +768,21 @@ async function sendMessage() {
     saveSessions();
     renderSessionList();
   } catch (err) {
-    typingEl.className = 'msg error';
+    typingEl.className = 'msg ai';
     const isOverload = err.message.includes('503') || err.message.includes('429') || err.message.includes('overloaded');
-    const hint = isOverload
-      ? '\n\n(The model is temporarily overloaded. Please wait a moment and try again.)'
-      : '\n\n(Make sure your Gemini API key is set correctly in Netlify environment variables.)';
-    typingEl.textContent = 'Error: ' + err.message + hint;
-    session.messages.push({ role: 'assistant', content: `[ERROR] ${err.message}` });
+    if (isOverload) {
+      typingEl.innerHTML = currentLang === 'th'
+        ? 'ขอโทษนะครับพี่ ตอนนี้น้องรับจบมีคนคุยเยอะมากเลย 😅 รอสักครู่แล้วลองส่งข้อความใหม่อีกครั้งนะครับ น้องจะรีบกลับมาตอบให้เร็วที่สุดครับ 💙'
+        : "Sorry! N'Rub Job is a bit busy right now — lots of people are chatting 😅 Please wait a moment and try sending your message again. I'll be right back! 💙";
+    } else {
+      typingEl.innerHTML = currentLang === 'th'
+        ? 'เกิดข้อผิดพลาดครับ กรุณาลองใหม่อีกครั้ง 🙏'
+        : 'Something went wrong. Please try again 🙏';
+      console.error('Chat error:', err.message);
+    }
+    // Remove the user message that caused the error so they can retry cleanly
+    session.messages.pop();
+    session.updatedAt = Date.now();
     saveSessions();
   } finally {
     sendBtn.disabled = false;
