@@ -2,7 +2,7 @@
 // API key is stored securely in Netlify env vars — never exposed in frontend code.
 // Browser calls /api/chat (Netlify function) which forwards to Gemini with the key.
 const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
-const GEMINI_FALLBACK_MODEL = 'gemini-2.0-flash-lite';
+const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash';
 
 // ============ i18n TRANSLATIONS ============
 const I18N = {
