@@ -10,8 +10,9 @@ export default async (req) => {
 
   try {
     const body = await req.json();
-    const primaryModel = body.model || 'gemini-3.1-flash-lite-preview';
-    const fallbackModel = 'gemini-2.0-flash-lite';
+
+    // Use stable model — the preview model is frequently overloaded
+    const model = body.model || 'gemini-2.0-flash-lite';
 
     const requestBody = JSON.stringify({
       systemInstruction: body.systemInstruction,
@@ -19,45 +20,37 @@ export default async (req) => {
       generationConfig: body.generationConfig
     });
 
-    // Try with retries + exponential backoff, then fallback model
-    const modelsToTry = [primaryModel, fallbackModel];
-
-    for (const model of modelsToTry) {
-      const maxRetries = 3;
-      for (let attempt = 0; attempt < maxRetries; attempt++) {
-        const geminiRes = await fetch(
-          `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: requestBody
-          }
-        );
-
-        // If success or a non-retryable error, return immediately
-        if (geminiRes.ok) {
-          const data = await geminiRes.json();
-          return Response.json(data, { status: 200 });
+    // Single attempt with one quick retry on 503/429
+    const maxRetries = 2;
+    for (let attempt = 0; attempt < maxRetries; attempt++) {
+      const geminiRes = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${GEMINI_API_KEY}`,
+        {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: requestBody
         }
+      );
 
-        // Only retry on 503 (overloaded) or 429 (rate limit)
-        if (geminiRes.status !== 503 && geminiRes.status !== 429) {
-          const data = await geminiRes.json();
-          return Response.json(data, { status: geminiRes.status });
-        }
-
-        // Wait before retrying: 1s, 2s, 4s (exponential backoff)
-        if (attempt < maxRetries - 1) {
-          const delayMs = Math.pow(2, attempt) * 1000;
-          await new Promise(resolve => setTimeout(resolve, delayMs));
-        }
+      if (geminiRes.ok) {
+        const data = await geminiRes.json();
+        return Response.json(data, { status: 200 });
       }
-      // If all retries failed for this model, try the fallback
+
+      // Only retry on 503/429, otherwise return the error immediately
+      if (geminiRes.status !== 503 && geminiRes.status !== 429) {
+        const data = await geminiRes.json();
+        return Response.json(data, { status: geminiRes.status });
+      }
+
+      // Short 1s wait before the single retry
+      if (attempt < maxRetries - 1) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+      }
     }
 
-    // All models and retries exhausted
     return Response.json(
-      { error: 'All models are currently experiencing high demand. Please try again in a moment.' },
+      { error: 'Model is currently experiencing high demand. Please try again in a moment.' },
       { status: 503 }
     );
   } catch (err) {
