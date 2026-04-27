@@ -682,9 +682,27 @@ async function sendMessage() {
 
   try {
     // Filter out [ERROR] messages — they must NOT be sent to the API as model responses
-    const cleanMessages = session.messages.filter(m => !m.content.startsWith('[ERROR]'));
-    const geminiContents = cleanMessages.map(m => ({
-      role: m.role === 'assistant' ? 'model' : 'user',
+    const cleanMessages = session.messages.filter(m => !m.content?.startsWith('[ERROR]'));
+    
+    // Gemini API requires STRICT alternating roles (user -> model -> user). 
+    // Past errors may have left consecutive user messages in history, causing 400 Bad Request.
+    const alternatingMessages = [];
+    for (const m of cleanMessages) {
+      const role = m.role === 'assistant' ? 'model' : 'user';
+      if (alternatingMessages.length === 0) {
+        if (role === 'user') alternatingMessages.push({ role, content: m.content });
+      } else {
+        const last = alternatingMessages[alternatingMessages.length - 1];
+        if (last.role === role) {
+          last.content += '\n\n' + m.content; // Collapse consecutive messages
+        } else {
+          alternatingMessages.push({ role, content: m.content });
+        }
+      }
+    }
+
+    const geminiContents = alternatingMessages.map(m => ({
+      role: m.role,
       parts: [{ text: m.content }]
     }));
 
