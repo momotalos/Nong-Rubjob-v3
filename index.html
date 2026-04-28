@@ -166,11 +166,117 @@
 <div class="view" id="view-employee">
   <div class="emp-app">
     <aside class="side-nav">
+      <button class="side-nav-btn" data-tab="home" onclick="switchEmpTab('home')"><span class="icon">🏠</span><span>Home</span></button>
       <button class="side-nav-btn active" data-tab="chat" onclick="switchEmpTab('chat')"><span class="icon">💬</span><span data-i18n="side_chat">Talk with N'Rub Job</span></button>
       <button class="side-nav-btn" data-tab="sanctuary" onclick="switchEmpTab('sanctuary')"><span class="icon">🌱</span><span data-i18n="side_sanctuary">Your Sanctuary</span></button>
       <button class="side-nav-btn" data-tab="data" onclick="switchEmpTab('data')"><span class="icon">📊</span><span data-i18n="side_data">Personal Data</span></button>
     </aside>
     <div class="emp-content">
+      <!-- HOME TAB -->
+      <div class="emp-tab" id="tab-home">
+        <div class="home-page">
+
+          <!-- Greeting -->
+          <div class="home-greeting" id="home-greeting">
+            <span class="home-greeting-text">How are you feeling today?</span>
+          </div>
+
+          <!-- Emotion Picker -->
+          <div class="emotion-row">
+            <button class="emotion-btn" data-mood="amazing" data-score="5" onclick="pickMood(this)">
+              <span class="emotion-emoji">🤩</span>
+              <span class="emotion-label">Amazing</span>
+            </button>
+            <button class="emotion-btn" data-mood="good" data-score="4" onclick="pickMood(this)">
+              <span class="emotion-emoji">😊</span>
+              <span class="emotion-label">Good</span>
+            </button>
+            <button class="emotion-btn" data-mood="okay" data-score="3" onclick="pickMood(this)">
+              <span class="emotion-emoji">😐</span>
+              <span class="emotion-label">Okay</span>
+            </button>
+            <button class="emotion-btn" data-mood="down" data-score="2" onclick="pickMood(this)">
+              <span class="emotion-emoji">😔</span>
+              <span class="emotion-label">Down</span>
+            </button>
+            <button class="emotion-btn" data-mood="stressed" data-score="1" onclick="pickMood(this)">
+              <span class="emotion-emoji">😤</span>
+              <span class="emotion-label">Stressed</span>
+            </button>
+          </div>
+
+          <!-- Emotion Popup -->
+          <div class="mood-popup" id="mood-popup" style="display:none">
+            <div class="mood-popup-inner">
+              <button class="mood-popup-close" onclick="closeMoodPopup()">✕</button>
+              <div class="mood-popup-emoji" id="popup-emoji"></div>
+              <div class="mood-popup-name" id="popup-name"></div>
+              <div class="mood-popup-msg" id="popup-msg"></div>
+            </div>
+          </div>
+
+          <!-- Mood Journal -->
+          <div class="home-panels">
+            <div class="mood-journal-panel">
+              <div class="mood-journal-header">
+                <h3>Your Mood Journey</h3>
+                <div class="sub">Consistency is key to wellness</div>
+                <div class="mood-tab-row">
+                  <button class="mood-tab-btn active" id="mtab-weekly" onclick="switchMoodTab('weekly')">Weekly</button>
+                  <button class="mood-tab-btn" id="mtab-monthly" onclick="switchMoodTab('monthly')">Monthly</button>
+                  <button class="mood-tab-btn" id="mtab-graph" onclick="switchMoodTab('graph')">Graph</button>
+                </div>
+              </div>
+
+              <!-- Weekly view -->
+              <div class="mood-view" id="mood-view-weekly">
+                <div class="mood-day-grid" id="mood-weekly-grid"></div>
+              </div>
+
+              <!-- Monthly view -->
+              <div class="mood-view" id="mood-view-monthly" style="display:none">
+                <div class="mood-month-grid" id="mood-monthly-grid"></div>
+              </div>
+
+              <!-- Graph view -->
+              <div class="mood-view" id="mood-view-graph" style="display:none">
+                <div class="mood-graph-wrap">
+                  <canvas id="mood-graph-canvas"></canvas>
+                </div>
+                <div class="mood-graph-legend">
+                  <span class="legend-dot" style="background:#2563eb"></span> Mood score (1–5)
+                </div>
+              </div>
+            </div>
+
+            <!-- Weekly Goal card -->
+            <div class="home-side-cards">
+              <div class="weekly-goal-card">
+                <div class="wg-label">Weekly Goal</div>
+                <div class="wg-sessions" id="wg-sessions">0/5 Sessions</div>
+                <div class="wg-ring-wrap">
+                  <svg width="56" height="56" viewBox="0 0 56 56">
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="#dbeafe" stroke-width="6"/>
+                    <circle cx="28" cy="28" r="22" fill="none" stroke="#2563eb" stroke-width="6"
+                      stroke-dasharray="138.2" id="wg-ring"
+                      stroke-dashoffset="138.2"
+                      stroke-linecap="round"
+                      transform="rotate(-90 28 28)"/>
+                  </svg>
+                  <span class="wg-pct" id="wg-pct">0%</span>
+                </div>
+              </div>
+              <div class="streak-card">
+                <div class="streak-icon">🔥</div>
+                <div class="streak-val" id="streak-val">0</div>
+                <div class="streak-label">Day Streak</div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
       <div class="emp-tab active" id="tab-chat">
         <div class="chat-layout">
           <div class="chat-sessions">
@@ -409,6 +515,7 @@
 
 <!-- Firebase SDK (compat — no build step required) -->
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
 <script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
 <script src="js/firebase-config.js"></script>
 <script src="js/db.js"></script>
