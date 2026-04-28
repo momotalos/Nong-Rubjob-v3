@@ -1,8 +1,8 @@
 // ============ GEMINI API CONFIG ============
 // API key is stored securely in Netlify env vars — never exposed in frontend code.
 // Browser calls /api/chat (Netlify function) which forwards to Gemini with the key.
-const GEMINI_MODEL = 'gemini-3.1-flash-lite-preview';
-const GEMINI_FALLBACK_MODEL = 'gemini-2.5-flash';
+const GEMINI_MODEL = 'gemini-1.5-flash';
+const GEMINI_FALLBACK = 'gemini-2.5-flash-preview-04-17';
 
 // ============ i18n TRANSLATIONS ============
 const I18N = {
@@ -457,6 +457,7 @@ function switchEmpTab(tab) {
   if (navBtn) navBtn.classList.add('active');
   if (tab === 'data') drawPersonalChart();
   if (tab === 'sanctuary') refreshSanctuary();
+  if (tab === 'home') initHomeTab();
 }
 
 // ============ MASCOT ============
@@ -1170,6 +1171,300 @@ function stopBreathing() {
   const overlay = document.getElementById('breathe-overlay');
   overlay.classList.remove('show');
   if (breatheInterval) { clearInterval(breatheInterval); breatheInterval = null; }
+}
+
+
+// ============ HOME TAB — MOOD TRACKER ============
+const MOOD_DATA = {
+  amazing: { emoji: '🤩', label: 'Amazing', score: 5, color: '#10b981',
+    msg: "That's wonderful! Your positive energy is contagious. Keep doing whatever you're doing — you're thriving! 🌟" },
+  good: { emoji: '😊', label: 'Good', score: 4, color: '#2563eb',
+    msg: "Great to hear! A good day is something to be grateful for. Keep riding this wave of positivity! 💙" },
+  okay: { emoji: '😐', label: 'Okay', score: 3, color: '#f59e0b',
+    msg: "That's perfectly okay — not every day has to be amazing. You're still here, and that already counts. 🌿" },
+  down: { emoji: '😔', label: 'Feeling Down', score: 2, color: '#8b5cf6',
+    msg: "It's okay not to be okay. Give yourself some grace today — even small moments of rest can help lift your spirit. 💜" },
+  stressed: { emoji: '😤', label: 'Stressed', score: 1, color: '#ef4444',
+    msg: "Stress can be really tough. Try taking three slow breaths right now. You don't have to handle everything at once. 🫁" }
+};
+
+function getMoodKey() {
+  const today = todayKey();
+  return 'mindhub_mood_' + (currentUser?.uid || 'guest') + '_' + today;
+}
+
+function getMoodHistory() {
+  try {
+    const raw = localStorage.getItem('mindhub_mood_history_' + (currentUser?.uid || 'guest'));
+    return raw ? JSON.parse(raw) : {};
+  } catch(e) { return {}; }
+}
+
+function saveMoodHistory(history) {
+  localStorage.setItem('mindhub_mood_history_' + (currentUser?.uid || 'guest'), JSON.stringify(history));
+}
+
+function pickMood(btn) {
+  const mood = btn.dataset.mood;
+  const data = MOOD_DATA[mood];
+  if (!data) return;
+
+  // Save to history
+  const history = getMoodHistory();
+  const today = todayKey();
+  history[today] = mood;
+  saveMoodHistory(history);
+
+  // Update button selection
+  document.querySelectorAll('.emotion-btn').forEach(b => b.classList.remove('selected'));
+  btn.classList.add('selected');
+
+  // Show popup
+  document.getElementById('popup-emoji').textContent = data.emoji;
+  document.getElementById('popup-name').textContent = data.label;
+  document.getElementById('popup-msg').textContent = data.msg;
+  document.getElementById('mood-popup').style.display = 'flex';
+
+  // Refresh grids
+  renderMoodWeekly();
+  renderMoodMonthly();
+  renderMoodGraph();
+  updateWeeklyGoal();
+  updateStreak();
+}
+
+function closeMoodPopup() {
+  document.getElementById('mood-popup').style.display = 'none';
+}
+
+function switchMoodTab(tab) {
+  ['weekly','monthly','graph'].forEach(t => {
+    document.getElementById('mood-view-' + t).style.display = t === tab ? 'block' : 'none';
+    document.getElementById('mtab-' + t).classList.toggle('active', t === tab);
+  });
+  if (tab === 'graph') renderMoodGraph();
+}
+
+function getWeekDays() {
+  const days = [];
+  const today = new Date();
+  for (let i = 6; i >= 0; i--) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    days.push(d);
+  }
+  return days;
+}
+
+function renderMoodWeekly() {
+  const grid = document.getElementById('mood-weekly-grid');
+  if (!grid) return;
+  const history = getMoodHistory();
+  const today = todayKey();
+  const days = getWeekDays();
+  const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+
+  grid.innerHTML = days.map(d => {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const mood = history[key];
+    const data = mood ? MOOD_DATA[mood] : null;
+    const isToday = key === today;
+    return `<div class="mood-day-cell ${isToday ? 'today' : ''} ${mood ? 'has-mood' : ''}">
+      <div class="mood-day-label">${dayNames[d.getDay()]}</div>
+      <div class="mood-day-date">${d.getDate()}</div>
+      <div class="mood-day-emoji">${data ? data.emoji : ''}</div>
+    </div>`;
+  }).join('');
+}
+
+function renderMoodMonthly() {
+  const grid = document.getElementById('mood-monthly-grid');
+  if (!grid) return;
+  const history = getMoodHistory();
+  const today = new Date();
+  const todayStr = todayKey();
+  const year = today.getFullYear();
+  const month = today.getMonth();
+  const firstDay = new Date(year, month, 1).getDay();
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  let html = '';
+  // Empty cells before first day
+  for (let i = 0; i < firstDay; i++) html += '<div class="mood-month-cell" style="opacity:0"></div>';
+  // Day cells
+  for (let d = 1; d <= daysInMonth; d++) {
+    const key = `${year}-${String(month+1).padStart(2,'0')}-${String(d).padStart(2,'0')}`;
+    const mood = history[key];
+    const data = mood ? MOOD_DATA[mood] : null;
+    const isToday = key === todayStr;
+    const bg = data ? data.color + '22' : '';
+    html += `<div class="mood-month-cell ${isToday ? 'today' : ''} ${mood ? 'has-mood' : ''}" style="${bg ? 'background:' + bg + ';border-color:' + data.color + '55' : ''}">
+      <span class="mood-month-label">${d}</span>
+      ${data ? `<span style="font-size:0.85rem">${data.emoji}</span>` : ''}
+    </div>`;
+  }
+  grid.innerHTML = html;
+}
+
+function renderMoodGraph() {
+  const canvas = document.getElementById('mood-graph-canvas');
+  if (!canvas) return;
+  const history = getMoodHistory();
+  const days = getWeekDays();
+  const scores = days.map(d => {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    const mood = history[key];
+    return mood ? MOOD_DATA[mood].score : null;
+  });
+  const labels = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
+  const dayLabels = days.map(d => labels[d.getDay()]);
+
+  const w = canvas.parentElement.clientWidth || 400;
+  const h = 160;
+  canvas.width = w * 2; canvas.height = h * 2;
+  canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+  const ctx = canvas.getContext('2d');
+  ctx.scale(2, 2);
+
+  const pad = { top: 16, bottom: 28, left: 28, right: 16 };
+  const cw = w - pad.left - pad.right;
+  const ch = h - pad.top - pad.bottom;
+
+  ctx.clearRect(0, 0, w, h);
+
+  // Grid lines
+  ctx.strokeStyle = 'rgba(148,163,184,0.2)';
+  ctx.lineWidth = 0.5;
+  for (let i = 1; i <= 4; i++) {
+    const y = pad.top + ch - (i / 5) * ch;
+    ctx.beginPath(); ctx.moveTo(pad.left, y); ctx.lineTo(pad.left + cw, y); ctx.stroke();
+  }
+
+  // Plot points
+  const points = scores.map((s, i) => ({
+    x: pad.left + (i / (scores.length - 1)) * cw,
+    y: s !== null ? pad.top + ch - ((s - 1) / 4) * ch : null,
+    score: s
+  }));
+
+  // Filled area under line
+  const validPts = points.filter(p => p.y !== null);
+  if (validPts.length >= 2) {
+    ctx.beginPath();
+    let started = false;
+    points.forEach((p, i) => {
+      if (p.y === null) return;
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    });
+    const lastValid = validPts[validPts.length - 1];
+    const firstValid = validPts[0];
+    ctx.lineTo(lastValid.x, pad.top + ch);
+    ctx.lineTo(firstValid.x, pad.top + ch);
+    ctx.closePath();
+    const grad = ctx.createLinearGradient(0, pad.top, 0, pad.top + ch);
+    grad.addColorStop(0, 'rgba(37,99,235,0.25)');
+    grad.addColorStop(1, 'rgba(37,99,235,0.02)');
+    ctx.fillStyle = grad;
+    ctx.fill();
+
+    // Line
+    ctx.beginPath();
+    started = false;
+    points.forEach(p => {
+      if (p.y === null) { started = false; return; }
+      if (!started) { ctx.moveTo(p.x, p.y); started = true; }
+      else ctx.lineTo(p.x, p.y);
+    });
+    ctx.strokeStyle = '#2563eb';
+    ctx.lineWidth = 2;
+    ctx.lineJoin = 'round';
+    ctx.stroke();
+
+    // Dots
+    points.forEach(p => {
+      if (p.y === null) return;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y, 4, 0, Math.PI * 2);
+      ctx.fillStyle = '#2563eb';
+      ctx.fill();
+      ctx.strokeStyle = 'white';
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+    });
+  }
+
+  // X labels
+  ctx.fillStyle = 'rgba(120,137,163,0.9)';
+  ctx.font = '10px JetBrains Mono, monospace';
+  ctx.textAlign = 'center';
+  points.forEach((p, i) => {
+    ctx.fillText(dayLabels[i], p.x, pad.top + ch + 18);
+  });
+
+  // Y labels
+  ctx.textAlign = 'right';
+  ['1','2','3','4','5'].forEach((v, i) => {
+    const y = pad.top + ch - (i / 4) * ch;
+    ctx.fillText(v, pad.left - 4, y + 4);
+  });
+}
+
+function updateWeeklyGoal() {
+  const history = getMoodHistory();
+  const days = getWeekDays();
+  let count = 0;
+  days.forEach(d => {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (history[key]) count++;
+  });
+  const goal = 5;
+  const pct = Math.min(100, Math.round((count / goal) * 100));
+  const circ = 138.2;
+  const el = document.getElementById('wg-sessions');
+  const ring = document.getElementById('wg-ring');
+  const pctEl = document.getElementById('wg-pct');
+  if (el) el.textContent = count + '/' + goal + ' Sessions';
+  if (ring) ring.style.strokeDashoffset = circ - (circ * pct / 100);
+  if (pctEl) pctEl.textContent = pct + '%';
+}
+
+function updateStreak() {
+  const history = getMoodHistory();
+  let streak = 0;
+  const d = new Date();
+  while (true) {
+    const key = `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
+    if (!history[key]) break;
+    streak++;
+    d.setDate(d.getDate() - 1);
+  }
+  const el = document.getElementById('streak-val');
+  if (el) el.textContent = streak;
+}
+
+function initHomeTab() {
+  renderMoodWeekly();
+  renderMoodMonthly();
+  updateWeeklyGoal();
+  updateStreak();
+
+  // Highlight today's mood if already recorded
+  const history = getMoodHistory();
+  const today = todayKey();
+  const todayMood = history[today];
+  if (todayMood) {
+    document.querySelectorAll('.emotion-btn').forEach(b => {
+      b.classList.toggle('selected', b.dataset.mood === todayMood);
+    });
+  }
+
+  // Update greeting
+  const h = new Date().getHours();
+  const greet = h < 12 ? 'Good morning' : h < 17 ? 'Good afternoon' : 'Good evening';
+  const name = currentUser?.name?.split(' ')[0] || '';
+  const el = document.getElementById('home-greeting');
+  if (el) el.innerHTML = `<span class="home-greeting-text">${greet}${name ? ', ' + name : ''}! How are you feeling today?</span>`;
 }
 
 // ============ INIT ============
