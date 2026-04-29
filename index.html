@@ -6,7 +6,7 @@
 <title>MindHub — Mental Wellness Platform with N'Rub Job</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,300..900;1,9..144,300..900&family=Inter:wght@300;400;500;600;700&family=IBM+Plex+Sans+Thai:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
 <link rel="stylesheet" href="css/styles.css">
 </head>
 <body>
@@ -169,9 +169,12 @@
       <button class="side-nav-btn" data-tab="home" onclick="switchEmpTab('home')"><span class="icon">🏠</span><span>Home</span></button>
       <button class="side-nav-btn active" data-tab="chat" onclick="switchEmpTab('chat')"><span class="icon">💬</span><span data-i18n="side_chat">Talk with N'Rub Job</span></button>
       <button class="side-nav-btn" data-tab="sanctuary" onclick="switchEmpTab('sanctuary')"><span class="icon">🌱</span><span data-i18n="side_sanctuary">Your Sanctuary</span></button>
+      <button class="side-nav-btn" data-tab="explore" onclick="switchEmpTab('explore')"><span class="icon">🔭</span><span data-i18n="side_explore">Explore</span></button>
+      <button class="side-nav-btn" data-tab="counseling" onclick="switchEmpTab('counseling')"><span class="icon">🩺</span><span data-i18n="side_counseling">Counseling &amp; Support</span></button>
       <button class="side-nav-btn" data-tab="data" onclick="switchEmpTab('data')"><span class="icon">📊</span><span data-i18n="side_data">Personal Data</span></button>
     </aside>
     <div class="emp-content">
+
       <!-- HOME TAB -->
       <div class="emp-tab" id="tab-home">
         <div class="home-page">
@@ -212,6 +215,9 @@
               <div class="mood-popup-emoji" id="popup-emoji"></div>
               <div class="mood-popup-name" id="popup-name"></div>
               <div class="mood-popup-msg" id="popup-msg"></div>
+              <div class="mood-popup-garden-note" id="popup-garden-note" style="margin-top:1rem;padding:0.7rem 1rem;background:var(--green-soft);border-radius:10px;font-size:0.85rem;color:#065f46;display:none;">
+                🌸 A flower has been added to your garden!
+              </div>
             </div>
           </div>
 
@@ -277,6 +283,7 @@
         </div>
       </div>
 
+      <!-- CHAT TAB -->
       <div class="emp-tab active" id="tab-chat">
         <div class="chat-layout">
           <div class="chat-sessions">
@@ -341,6 +348,276 @@
         </div>
       </div>
 
+      <!-- EXPLORE TAB -->
+      <div class="emp-tab" id="tab-explore">
+        <div class="explore-page">
+          <!-- Header -->
+          <div class="explore-header">
+            <div>
+              <h2 class="explore-title">Explore Growth</h2>
+              <p class="explore-sub">Bite-sized learning designed for your busy schedule.</p>
+            </div>
+            <a href="#" class="explore-view-all">View all modules →</a>
+          </div>
+
+          <!-- Module Cards -->
+          <div class="explore-modules-grid">
+            <div class="explore-module-card">
+              <div class="explore-module-icon">🎯</div>
+              <h3>Anti-Burnout</h3>
+              <p>Practical strategies to manage workload stress and maintain long-term professional energy.</p>
+              <div class="explore-progress-row">
+                <span>Progress</span><span>65%</span>
+              </div>
+              <div class="explore-progress-bar"><div style="width:65%"></div></div>
+            </div>
+            <div class="explore-module-card">
+              <div class="explore-module-icon">🌙</div>
+              <h3>Better Sleep</h3>
+              <p>Optimizing your evening routine for restorative rest and improved cognitive performance.</p>
+              <div class="explore-progress-row">
+                <span>Progress</span><span>30%</span>
+              </div>
+              <div class="explore-progress-bar"><div style="width:30%"></div></div>
+            </div>
+            <div class="explore-module-card">
+              <div class="explore-module-icon">💬</div>
+              <h3>Confident Communication</h3>
+              <p>Mastering the art of assertive yet empathetic dialogue in complex workplace dynamics.</p>
+              <div class="explore-progress-row">
+                <span>Progress</span><span>85%</span>
+              </div>
+              <div class="explore-progress-bar"><div style="width:85%"></div></div>
+            </div>
+          </div>
+
+          <!-- Featured Session -->
+          <div class="explore-featured">
+            <div class="explore-featured-visual">
+              <!-- Animated Tree SVG -->
+              <svg class="explore-tree-svg" viewBox="0 0 400 300" xmlns="http://www.w3.org/2000/svg">
+                <defs>
+                  <linearGradient id="skyGradExplore" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#bae6fd"/>
+                    <stop offset="100%" stop-color="#d1fae5"/>
+                  </linearGradient>
+                  <linearGradient id="grassGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="0%" stop-color="#4ade80"/>
+                    <stop offset="100%" stop-color="#16a34a"/>
+                  </linearGradient>
+                </defs>
+                <!-- Sky background -->
+                <rect width="400" height="300" fill="url(#skyGradExplore)" rx="16"/>
+                <!-- Sun -->
+                <circle cx="340" cy="50" r="30" fill="#fde68a" opacity="0.7">
+                  <animate attributeName="r" values="30;33;30" dur="4s" repeatCount="indefinite"/>
+                  <animate attributeName="opacity" values="0.7;0.9;0.7" dur="4s" repeatCount="indefinite"/>
+                </circle>
+                <!-- Clouds -->
+                <g opacity="0.8">
+                  <ellipse cx="80" cy="60" rx="40" ry="18" fill="white">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;8,0;0,0" dur="8s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <ellipse cx="100" cy="52" rx="28" ry="16" fill="white">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;8,0;0,0" dur="8s" repeatCount="indefinite"/>
+                  </ellipse>
+                </g>
+                <g opacity="0.6">
+                  <ellipse cx="260" cy="40" rx="30" ry="14" fill="white">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-6,0;0,0" dur="10s" repeatCount="indefinite"/>
+                  </ellipse>
+                  <ellipse cx="278" cy="33" rx="20" ry="12" fill="white">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;-6,0;0,0" dur="10s" repeatCount="indefinite"/>
+                  </ellipse>
+                </g>
+                <!-- Ground -->
+                <ellipse cx="200" cy="270" rx="180" ry="20" fill="#86efac" opacity="0.5"/>
+                <rect x="0" y="265" width="400" height="35" fill="url(#grassGrad)" rx="0"/>
+                <!-- Tree trunk -->
+                <g class="explore-tree-group">
+                  <rect x="185" y="180" width="30" height="90" fill="#92400e" rx="4">
+                    <animateTransform attributeName="transform" type="rotate" values="0 200 265;1 200 265;-1 200 265;0 200 265" dur="3s" repeatCount="indefinite"/>
+                  </rect>
+                  <!-- Tree foliage layers (bottom to top, each sways) -->
+                  <g>
+                    <animateTransform attributeName="transform" type="rotate" values="0 200 265;2 200 265;-2 200 265;0 200 265" dur="3s" repeatCount="indefinite"/>
+                    <ellipse cx="200" cy="195" rx="65" ry="45" fill="#22c55e"/>
+                    <ellipse cx="200" cy="165" rx="55" ry="42" fill="#16a34a"/>
+                    <ellipse cx="200" cy="138" rx="45" ry="38" fill="#15803d"/>
+                    <ellipse cx="200" cy="115" rx="32" ry="30" fill="#166534"/>
+                    <!-- Small highlights -->
+                    <ellipse cx="178" cy="148" rx="10" ry="8" fill="#4ade80" opacity="0.5"/>
+                    <ellipse cx="215" cy="130" rx="8" ry="7" fill="#4ade80" opacity="0.4"/>
+                  </g>
+                </g>
+                <!-- Birds -->
+                <g opacity="0.7">
+                  <path d="M60 90 Q65 85 70 90 Q75 85 80 90" fill="none" stroke="#334155" stroke-width="1.5" stroke-linecap="round">
+                    <animateTransform attributeName="transform" type="translate" values="0,0;120,-20;240,-5;360,-15;400,-10" dur="12s" repeatCount="indefinite"/>
+                  </path>
+                </g>
+                <!-- Quote text -->
+                <text x="200" y="248" text-anchor="middle" font-family="Fraunces, serif" font-size="13" fill="#1e3a2f" font-style="italic" opacity="0.85">"Small steps everyday lead to lasting peace."</text>
+              </svg>
+            </div>
+            <div class="explore-featured-content">
+              <div class="explore-featured-meta">
+                <span class="explore-badge">FEATURED SESSION</span>
+                <span class="explore-read-time">· 15 min read</span>
+              </div>
+              <h2 class="explore-featured-title">The Power of Daily Intentions</h2>
+              <p class="explore-featured-desc">Discover how shifting your focus to small, manageable daily habits can significantly reduce overall anxiety and build long-term mental resilience.</p>
+              <div class="explore-featured-btns">
+                <button class="explore-btn-primary">Start Module ▶</button>
+                <button class="explore-btn-secondary">Save for Later</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Find Your Guide -->
+          <div class="explore-guides-section">
+            <h2 class="explore-guides-title">Find Your Perfect Guide</h2>
+            <p class="explore-guides-sub">Connect with certified specialists tailored to your unique journey and professional goals.</p>
+            <div class="explore-guides-grid">
+              <div class="explore-guide-card">
+                <div class="explore-guide-avatar">SJ</div>
+                <div class="explore-guide-online online"></div>
+                <div class="explore-guide-name">Sarah Jenkins</div>
+                <div class="explore-guide-role">Burnout &amp; Resilience Specialist</div>
+                <p class="explore-guide-desc">12 years of experience in organizational psychology and stress management.</p>
+                <button class="explore-book-btn">Book Session</button>
+              </div>
+              <div class="explore-guide-card featured-guide">
+                <div class="explore-guide-avatar">MT</div>
+                <div class="explore-guide-online online"></div>
+                <div class="explore-guide-name">Marcus Thorne</div>
+                <div class="explore-guide-role">Communication &amp; Leadership</div>
+                <p class="explore-guide-desc">Certified executive coach helping professionals navigate complex corporate environments.</p>
+                <button class="explore-book-btn">Book Session</button>
+              </div>
+              <div class="explore-guide-card">
+                <div class="explore-guide-avatar">ER</div>
+                <div class="explore-guide-online"></div>
+                <div class="explore-guide-name">Elena Rodriguez</div>
+                <div class="explore-guide-role">Sleep &amp; Cognitive Performance</div>
+                <p class="explore-guide-desc">Specializing in sleep hygiene and mental clarity for high-performing technical teams.</p>
+                <button class="explore-book-btn">Book Session</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- COUNSELING & SUPPORT TAB -->
+      <div class="emp-tab" id="tab-counseling">
+        <div class="counseling-page">
+
+          <!-- Stress Assessment Card -->
+          <div class="counseling-assessment-card">
+            <div class="ca-header">
+              <div>
+                <h3 class="ca-title">Stress Level Assessment</h3>
+                <p class="ca-sub">Last updated: Today, 9:15 AM</p>
+              </div>
+              <span class="ca-badge">Moderate</span>
+            </div>
+            <div class="ca-body">
+              <!-- Gauge -->
+              <div class="ca-gauge-wrap">
+                <svg viewBox="0 0 200 110" class="ca-gauge-svg">
+                  <defs>
+                    <linearGradient id="gaugeGrad" x1="0" y1="0" x2="1" y2="0">
+                      <stop offset="0%" stop-color="#22c55e"/>
+                      <stop offset="45%" stop-color="#eab308"/>
+                      <stop offset="100%" stop-color="#ef4444"/>
+                    </linearGradient>
+                  </defs>
+                  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="#e2e8f0" stroke-width="14" stroke-linecap="round"/>
+                  <path d="M 20 100 A 80 80 0 0 1 180 100" fill="none" stroke="url(#gaugeGrad)" stroke-width="14" stroke-linecap="round" stroke-dasharray="251.2" stroke-dashoffset="90"/>
+                  <text x="100" y="88" text-anchor="middle" font-family="Fraunces,serif" font-size="28" font-weight="700" fill="#0f1e3a">64%</text>
+                  <text x="100" y="104" text-anchor="middle" font-family="Inter,sans-serif" font-size="8" fill="#7889a3" letter-spacing="1">STRESS INDEX</text>
+                </svg>
+              </div>
+              <!-- Recommendation -->
+              <div class="ca-recommendation">
+                <div class="ca-rec-icon">🧘</div>
+                <div class="ca-rec-content">
+                  <span class="ca-rec-tag">Our Recommendation</span>
+                  <h4 class="ca-rec-title">Focus on Mindfulness</h4>
+                  <p class="ca-rec-desc">Based on your recent check-ins, we recommend a 1:1 session with a Work Stress specialist this week.</p>
+                  <div class="ca-rec-btns">
+                    <button class="ca-btn-primary">Start Coaching</button>
+                    <button class="ca-btn-ghost">View Details</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Available Specialists -->
+          <div class="ca-specialists-section">
+            <div class="ca-specialists-header">
+              <div>
+                <h3 class="ca-specialists-title">Available Specialists</h3>
+                <p class="ca-specialists-sub">Vetted professionals ready to support your journey</p>
+              </div>
+              <button class="ca-view-all">View All →</button>
+            </div>
+            <div class="ca-specialists-grid">
+              <div class="ca-specialist-card">
+                <div class="ca-specialist-img">SJ</div>
+                <div class="ca-specialist-online"></div>
+                <div class="ca-specialist-name">Sarah Jenkins</div>
+                <div class="ca-specialist-role">Burnout &amp; Resilience</div>
+                <div class="ca-specialist-tags">
+                  <span>Workplace Stress</span><span>Burnout</span><span>CBT</span>
+                </div>
+                <div class="ca-specialist-meta">⭐ 4.9 · 127 sessions</div>
+                <button class="ca-book-btn">Book a Session</button>
+              </div>
+              <div class="ca-specialist-card">
+                <div class="ca-specialist-img">MT</div>
+                <div class="ca-specialist-online online"></div>
+                <div class="ca-specialist-name">Marcus Thorne</div>
+                <div class="ca-specialist-role">Communication &amp; Leadership</div>
+                <div class="ca-specialist-tags">
+                  <span>Leadership</span><span>Conflict</span><span>Coaching</span>
+                </div>
+                <div class="ca-specialist-meta">⭐ 4.8 · 89 sessions</div>
+                <button class="ca-book-btn">Book a Session</button>
+              </div>
+              <div class="ca-specialist-card">
+                <div class="ca-specialist-img">ER</div>
+                <div class="ca-specialist-online"></div>
+                <div class="ca-specialist-name">Elena Rodriguez</div>
+                <div class="ca-specialist-role">Sleep &amp; Cognitive Performance</div>
+                <div class="ca-specialist-tags">
+                  <span>Sleep</span><span>Anxiety</span><span>Focus</span>
+                </div>
+                <div class="ca-specialist-meta">⭐ 4.9 · 214 sessions</div>
+                <button class="ca-book-btn">Book a Session</button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Crisis Resources -->
+          <div class="ca-crisis-box">
+            <div class="ca-crisis-icon">🆘</div>
+            <div class="ca-crisis-content">
+              <h4>In Crisis? You're not alone.</h4>
+              <p>If you are in immediate danger or experiencing a mental health crisis, please reach out now.</p>
+              <div class="ca-crisis-contacts">
+                <div class="ca-crisis-contact"><strong>1323</strong><span>Thailand Mental Health Hotline</span></div>
+                <div class="ca-crisis-contact"><strong>1669</strong><span>Emergency Services</span></div>
+                <div class="ca-crisis-contact"><strong>02-713-6793</strong><span>Samaritans Thailand</span></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PERSONAL DATA TAB -->
       <div class="emp-tab" id="tab-data">
         <div class="page-header"><h2 data-i18n="data_title">Your Personal Data</h2><div class="sub" data-i18n="data_sub">A private clinical-style overview · only you can see this</div></div>
         <div class="stats-grid">
@@ -377,6 +654,7 @@
           </div>
         </div>
       </div>
+
     </div>
   </div>
 </div>
@@ -432,18 +710,6 @@
           <div class="alert-item"><div class="alert-head"><strong>#EMP-2103 · Sales</strong><span class="alert-time">2h ago</span></div><p data-i18n="alert_2_desc">GAD-7: 15/21 · sustained medium risk · 5 sessions · topics: manager, workload</p><div class="alert-action"><button data-i18n="action_counselor">Recommend counselor</button></div></div>
           <div class="alert-item"><div class="alert-head"><strong>Team: Operations</strong><span class="alert-time" data-i18n="yesterday">yesterday</span></div><p data-i18n="alert_3_desc">Team PSS ↑ 42% this week · burnout cluster forming · consider workshop</p><div class="alert-action"><button data-i18n="action_view_team">View team</button></div></div>
           <div class="alert-item"><div class="alert-head"><strong>#EMP-0872 · Marketing</strong><span class="alert-time">5h ago</span></div><p data-i18n="alert_4_desc">Burnout indicators ↑ 40% · disengagement signals · sleep quality decline</p><div class="alert-action"><button data-i18n="action_checkin">Schedule check-in</button></div></div>
-        </div>
-      </div>
-    </div>
-    <div class="dash-row">
-      <div class="panel"><h3 data-i18n="heatmap_title">Team Health Heatmap</h3><div class="sub" data-i18n="heatmap_sub">14 days · green = low risk · red = high risk</div><div class="heatmap" id="heatmap"></div>
-        <div class="heatmap-scale"><span data-i18n="risk_low">Low risk</span><div class="heatmap-scale-bar"><div style="background:var(--green)"></div><div style="background:#6ee7b7"></div><div style="background:#fde68a"></div><div style="background:#fb923c"></div><div style="background:var(--red)"></div></div><span data-i18n="risk_high">High risk</span></div>
-      </div>
-      <div class="panel"><h3 data-i18n="rca_title">Root Cause Analysis</h3><div class="sub" data-i18n="rca_sub">AI-generated actionable insights for C-level decisions</div>
-        <div class="rca-list">
-          <div class="rca-card"><strong>⚠ <span data-i18n="rca_1_title">Meeting overload · Engineering</span></strong><p data-i18n="rca_1_desc">Avg 6.2 meetings/day vs org avg 3.8 · correlates with 34% higher GAD-7 scores in team</p><button class="action-btn" data-i18n="rca_1_action">Suggest: No-meeting Wednesday</button></div>
-          <div class="rca-card"><strong>🔥 <span data-i18n="rca_2_title">Quarter-end pressure · Sales</span></strong><p data-i18n="rca_2_desc">Burnout signals peak in final 2 weeks of Q · 3 high-risk cases cluster here · PSS ↑ 28%</p><button class="action-btn" data-i18n="rca_2_action">Suggest: workload rebalancing</button></div>
-          <div class="rca-card"><strong>🌙 <span data-i18n="rca_3_title">Poor sleep · Operations night shift</span></strong><p data-i18n="rca_3_desc">Sleep-quality scores ↓ 52% vs day shift · linked to rotation policy · review recommended</p><button class="action-btn" data-i18n="rca_3_action">Review shift policy</button></div>
         </div>
       </div>
     </div>
