@@ -55,6 +55,8 @@ const I18N = {
     confirm_delete: "Delete this conversation?",
     side_chat: "Talk with N'Rub Job",
     side_sanctuary: "Your Sanctuary",
+    side_explore: "Explore",
+    side_counseling: "Counseling & Support",
     side_data: "Personal Data",
     sanctuary_title: "Your Sanctuary",
     sanctuary_sub: "A private space that grows with you · nothing is ever lost here",
@@ -79,6 +81,7 @@ const I18N = {
     toast_plant: "A new plant appeared",
     toast_breathing: "Plant grown from breathing",
     toast_reflection: "Plant grown from reflection",
+    toast_mood: "Flower grown from your check-in 🌸",
     toast_milestone: "New milestone unlocked",
     phase_label_1: "PHASE 1 · RAPPORT",
     phase_label_2: "PHASE 2 · INTAKE",
@@ -156,6 +159,8 @@ const I18N = {
     confirm_delete: "ลบบทสนทนานี้?",
     side_chat: "คุยกับน้องรับจบ",
     side_sanctuary: "สวนของคุณ",
+    side_explore: "สำรวจ",
+    side_counseling: "การให้คำปรึกษา",
     side_data: "ข้อมูลส่วนตัว",
     sanctuary_title: "สวนส่วนตัวของคุณ",
     sanctuary_sub: "พื้นที่ส่วนตัวที่เติบโตไปพร้อมกับคุณ · ไม่มีอะไรสูญหายที่นี่",
@@ -180,6 +185,7 @@ const I18N = {
     toast_plant: "ต้นไม้ใหม่ปรากฏแล้ว",
     toast_breathing: "ต้นไม้งอกจากการฝึกหายใจ",
     toast_reflection: "ต้นไม้งอกจากการสะท้อนใจ",
+    toast_mood: "ดอกไม้งอกจากการเช็คอินวันนี้ 🌸",
     toast_milestone: "ปลดล็อก milestone ใหม่",
     phase_label_1: "เฟส 1 · สร้างความไว้ใจ",
     phase_label_2: "เฟส 2 · รับฟังปัญหา",
@@ -974,12 +980,13 @@ function growPlant(source) {
   s.plants.push(plant);
   if (source === 'chat') s.chatCount = (s.chatCount||0) + 1;
   if (source === 'breathing') s.breathingCount = (s.breathingCount||0) + 1;
+  if (source === 'mood') s.moodCount = (s.moodCount||0) + 1;
   const today = todayKey();
   if (!s.daysVisited.includes(today)) s.daysVisited.push(today);
   saveSanctuary(s);
   renderGarden();
   checkMilestones();
-  showGrowToast(I18N[currentLang]['toast_' + (source === 'breathing' ? 'breathing' : source === 'reflection' ? 'reflection' : 'plant')]);
+  showGrowToast(I18N[currentLang]['toast_' + (source === 'breathing' ? 'breathing' : source === 'reflection' ? 'reflection' : source === 'mood' ? 'mood' : 'plant')]);
   return plant;
 }
 
@@ -1209,9 +1216,12 @@ function pickMood(btn) {
   const data = MOOD_DATA[mood];
   if (!data) return;
 
-  // Save to history
+  // Check if this is the first mood check-in today (for garden reward)
   const history = getMoodHistory();
   const today = todayKey();
+  const isFirstCheckInToday = !history[today];
+
+  // Save to history
   history[today] = mood;
   saveMoodHistory(history);
 
@@ -1223,7 +1233,19 @@ function pickMood(btn) {
   document.getElementById('popup-emoji').textContent = data.emoji;
   document.getElementById('popup-name').textContent = data.label;
   document.getElementById('popup-msg').textContent = data.msg;
+
+  // Show garden note if first check-in today
+  const gardenNote = document.getElementById('popup-garden-note');
+  if (gardenNote) {
+    gardenNote.style.display = isFirstCheckInToday && currentUser?.role === 'employee' ? 'block' : 'none';
+  }
+
   document.getElementById('mood-popup').style.display = 'flex';
+
+  // Grow a flower in sanctuary (only on first daily check-in)
+  if (isFirstCheckInToday && currentUser && currentUser.role === 'employee') {
+    setTimeout(() => growPlant('mood'), 300);
+  }
 
   // Refresh grids
   renderMoodWeekly();
