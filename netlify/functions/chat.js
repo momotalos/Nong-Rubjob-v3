@@ -3,7 +3,7 @@ export default async (req) => {
     return new Response('Method not allowed', { status: 405 });
   }
 
-  const GEMINI_API_KEY = Netlify.env.get('GEMINI_API_KEY');
+  const GEMINI_API_KEY = (typeof Netlify !== 'undefined' && Netlify.env ? Netlify.env.get('GEMINI_API_KEY') : process.env.GEMINI_API_KEY);
   if (!GEMINI_API_KEY) {
     return Response.json({ error: 'API key not configured in Netlify environment variables' }, { status: 500 });
   }
@@ -19,7 +19,7 @@ export default async (req) => {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          systemInstruction: body.systemInstruction,
+          system_instruction: body.systemInstruction,
           contents: body.contents,
           generationConfig: body.generationConfig
         })
